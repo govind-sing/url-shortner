@@ -44,6 +44,11 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is blocked",
+        )
     return user, jti, datetime.fromtimestamp(exp, tz=timezone.utc)
 
 
@@ -65,12 +70,21 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is blocked",
+        )
     token, _ = auth_service.create_access_token(user.id)
     return {"access_token": token, "token_type": "bearer"}
-
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
 def logout(current: tuple = Depends(get_current_user)):
     _, jti, exp = current
     auth_service.blacklist_token(jti, exp)
     return {"message": "Successfully logged out"}
+
+
+
+
+ 

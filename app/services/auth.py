@@ -66,3 +66,22 @@ def create_user(db: Session, email: str, username: str, password: str) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+
+def block_user(db: Session, user_id: int):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError("User not found")
+    user.is_active = False
+    db.commit()
+    db.refresh(user)
+    return user
+
+def unblock_user(db: Session, user_id: int):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise ValueError("User not found")
+    user.is_active = True
+    db.commit()
+    db.refresh(user)
+    return user
