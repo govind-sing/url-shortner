@@ -61,13 +61,16 @@ def create_short_url(db: Session, original_url: str, owner_id: int, custom_alias
 
 def update_short_url(db: Session, url: URL, new_alias: str) -> URL:
     r = get_redis()
-    # invalidate old cache entry before changing the code
-    r.delete(f"url:{url.short_code}")
-
+    old_code = url.short_code
     url.short_code = new_alias
-    db.commit()
-    db.refresh(url)
-    return url
+    try:
+        db.commit()
+        db.refresh(url)
+        r.delete(f"url:{old_code}")
+        return url
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("Alias already taken")
 
 
 def delete_short_url(db: Session, url: URL) -> None:

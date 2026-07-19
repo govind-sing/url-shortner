@@ -68,12 +68,14 @@ def update_url(
     if not url:
         raise HTTPException(status_code=404, detail="URL not found")
 
-    existing = url_service.get_url_by_short_code(db, payload.custom_alias)
-    if existing and existing.id != url_id:
-        raise HTTPException(status_code=400, detail="Alias already taken")
+    try:
+        url = url_service.update_short_url(db, url, payload.custom_alias)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    url = url_service.update_short_url(db, url, payload.custom_alias)
     return build_url_response(url, settings.BASE_URL)
+
+
 
 
 @router.delete("/{url_id}", status_code=status.HTTP_200_OK)
