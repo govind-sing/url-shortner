@@ -31,17 +31,16 @@ def create_url(
 ):
     user, _, _ = current
 
-    if payload.custom_alias:
-        existing = url_service.get_url_by_short_code(db, payload.custom_alias)
-        if existing:
-            raise HTTPException(status_code=400, detail="Custom alias already taken")
+    try:
+        url = url_service.create_short_url(
+            db=db,
+            original_url=str(payload.original_url),
+            owner_id=user.id,
+            custom_alias=payload.custom_alias,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    url = url_service.create_short_url(
-        db=db,
-        original_url=str(payload.original_url),
-        owner_id=user.id,
-        custom_alias=payload.custom_alias,
-    )
     return build_url_response(url, settings.BASE_URL)
 
 
@@ -53,6 +52,8 @@ def list_urls(
     user, _, _ = current
     urls = url_service.get_urls_by_owner(db, user.id)
     return [build_url_response(u, settings.BASE_URL) for u in urls]
+
+
 
 
 @router.patch("/{url_id}", response_model=URLResponse)
