@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import auth
+from app.routers import auth, urls, redirect
 
 app = FastAPI(
     title="URL Shortener",
@@ -8,6 +8,8 @@ app = FastAPI(
 )
 
 app.include_router(auth.router)
+app.include_router(urls.router)
+app.include_router(redirect.router)
 
 
 @app.get("/health")
